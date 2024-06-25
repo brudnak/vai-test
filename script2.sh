@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+echo "Starting script execution..."
+
 # Function to check if Go is installed and working
 check_go() {
     if command -v go >/dev/null 2>&1; then
@@ -13,7 +15,7 @@ check_go() {
 
 # Install Go if not already installed
 if ! check_go; then
-    echo "Installing Go..."
+    echo "Go not found. Installing Go..."
     curl -L -o go1.22.4.linux-amd64.tar.gz https://go.dev/dl/go1.22.4.linux-amd64.tar.gz --insecure
     tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
     rm go1.22.4.linux-amd64.tar.gz
@@ -21,22 +23,28 @@ if ! check_go; then
     # Set PATH for this session and future sessions
     export PATH=$PATH:/usr/local/go/bin
     echo 'export PATH=$PATH:/usr/local/go/bin' >> /root/.bashrc
+    echo "Go installed successfully."
+else
+    echo "Go is already installed."
 fi
 
 # Ensure Go is in the PATH for this script
 export PATH=$PATH:/usr/local/go/bin
 
-echo "Go version:" $(go version)
+echo "Checking Go version:"
+go version
 
 # Check if the query program is already built
 if [ ! -f /usr/local/bin/vai-query ]; then
-    echo "Building vai-query program..."
+    echo "vai-query not found. Building vai-query program..."
     mkdir -p /root/vai-query
     cd /root/vai-query
     
     # Initialize Go module
+    echo "Initializing Go module..."
     go mod init vai-query
 
+    echo "Creating main.go..."
     cat << EOF > main.go
 package main
 
@@ -90,16 +98,18 @@ func main() {
 }
 EOF
 
-    # Add SQLite driver to go.mod
+    echo "Adding SQLite driver to go.mod..."
     go get github.com/mattn/go-sqlite3
 
-    # Build the program
-    go build -o /usr/local/bin/vai-query main.go
+    echo "Building the program with CGO enabled..."
+    CGO_ENABLED=1 go build -o /usr/local/bin/vai-query main.go
 
     echo "vai-query program built successfully."
 else
     echo "vai-query program already exists."
 fi
 
-# Execute the query program
+echo "Executing the query program..."
 TABLE_NAME="${TABLE_NAME}" RESOURCE_NAME="${RESOURCE_NAME}" /usr/local/bin/vai-query
+
+echo "Script execution completed."
