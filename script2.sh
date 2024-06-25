@@ -28,19 +28,17 @@ export PATH=$PATH:/usr/local/go/bin
 echo "Checking Go version:"
 go version
 
-echo "Removing old vai-query if it exists..."
-rm -f /usr/local/bin/vai-query
+# Check if vai-query already exists
+if [ ! -f /usr/local/bin/vai-query ]; then
+    echo "vai-query not found. Building vai-query program..."
+    mkdir -p /root/vai-query
+    cd /root/vai-query
 
-echo "Building vai-query program..."
-mkdir -p /root/vai-query
-cd /root/vai-query
+    # Initialize Go module
+    go mod init vai-query
 
-# Initialize Go module
-echo "Initializing Go module..."
-go mod init vai-query
-
-echo "Creating main.go..."
-cat << EOF > main.go
+    # Create main.go
+    cat << EOF > main.go
 package main
 
 import (
@@ -85,13 +83,16 @@ func main() {
 }
 EOF
 
-echo "Adding dependencies..."
-go get github.com/pkg/errors
-go get modernc.org/sqlite
+    # Get dependencies
+    go get github.com/pkg/errors
+    go get modernc.org/sqlite
 
-echo "Building pure Go version..."
-go build -o /usr/local/bin/vai-query main.go
-echo "Pure Go vai-query program built successfully."
+    # Build the program
+    go build -o /usr/local/bin/vai-query main.go
+    echo "Pure Go vai-query program built successfully."
+else
+    echo "vai-query program already exists. Using existing binary."
+fi
 
 echo "Executing the query program..."
 TABLE_NAME="${TABLE_NAME}" RESOURCE_NAME="${RESOURCE_NAME}" /usr/local/bin/vai-query
