@@ -16,7 +16,6 @@ if ! check_go; then
     echo "Installing Go..."
     curl -L -o go1.22.4.linux-amd64.tar.gz https://go.dev/dl/go1.22.4.linux-amd64.tar.gz --insecure
     tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
-    echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.bashrc
     export PATH=$PATH:/usr/local/go/bin
     rm go1.22.4.linux-amd64.tar.gz
 else
@@ -28,7 +27,13 @@ echo "Go version:" $(go version)
 # Check if the query program is already built
 if [ ! -f /usr/local/bin/vai-query ]; then
     echo "Building vai-query program..."
-    cat << EOF > /tmp/vai-query.go
+    mkdir -p /tmp/vai-query
+    cd /tmp/vai-query
+    
+    # Initialize Go module
+    go mod init vai-query
+
+    cat << EOF > main.go
 package main
 
 import (
@@ -81,14 +86,15 @@ func main() {
 }
 EOF
 
-    # Install the SQLite driver for Go
+    # Add SQLite driver to go.mod
     go get github.com/mattn/go-sqlite3
 
     # Build the program
-    go build -o /usr/local/bin/vai-query /tmp/vai-query.go
+    go build -o /usr/local/bin/vai-query main.go
 
     # Clean up
-    rm /tmp/vai-query.go
+    cd /
+    rm -rf /tmp/vai-query
 else
     echo "vai-query program already exists."
 fi
