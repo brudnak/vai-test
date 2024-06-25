@@ -28,6 +28,10 @@ export PATH=$PATH:/usr/local/go/bin
 echo "Checking Go version:"
 go version
 
+# Install build essentials
+echo "Installing build essentials..."
+apk add --no-cache gcc musl-dev
+
 echo "Removing old vai-query if it exists..."
 rm -f /usr/local/bin/vai-query
 
