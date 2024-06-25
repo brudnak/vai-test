@@ -34,10 +34,12 @@ if [ ! -f /usr/local/bin/vai-query ]; then
     mkdir -p /root/vai-query
     cd /root/vai-query
 
-    # Initialize Go module
-    go mod init vai-query
+    # Initialize Go module if it doesn't exist
+    if [ ! -f go.mod ]; then
+        go mod init vai-query
+    fi
 
-    # Create main.go
+    # Create or update main.go
     cat << EOF > main.go
 package main
 
