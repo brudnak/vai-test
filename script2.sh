@@ -17,6 +17,7 @@ if ! check_go; then
     curl -L -o go1.22.4.linux-amd64.tar.gz https://go.dev/dl/go1.22.4.linux-amd64.tar.gz --insecure
     tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
     export PATH=$PATH:/usr/local/go/bin
+    echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.bashrc
     rm go1.22.4.linux-amd64.tar.gz
 else
     echo "Go is already installed."
@@ -27,8 +28,8 @@ echo "Go version:" $(go version)
 # Check if the query program is already built
 if [ ! -f /usr/local/bin/vai-query ]; then
     echo "Building vai-query program..."
-    mkdir -p /tmp/vai-query
-    cd /tmp/vai-query
+    mkdir -p /root/vai-query
+    cd /root/vai-query
     
     # Initialize Go module
     go mod init vai-query
@@ -92,9 +93,7 @@ EOF
     # Build the program
     go build -o /usr/local/bin/vai-query main.go
 
-    # Clean up
-    cd /
-    rm -rf /tmp/vai-query
+    echo "vai-query program built successfully."
 else
     echo "vai-query program already exists."
 fi
