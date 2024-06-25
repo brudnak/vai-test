@@ -11,17 +11,20 @@ check_go() {
     return 1
 }
 
-# Check if Go is already installed and working
+# Install Go if not already installed
 if ! check_go; then
     echo "Installing Go..."
     curl -L -o go1.22.4.linux-amd64.tar.gz https://go.dev/dl/go1.22.4.linux-amd64.tar.gz --insecure
     tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
-    export PATH=$PATH:/usr/local/go/bin
-    echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.bashrc
     rm go1.22.4.linux-amd64.tar.gz
-else
-    echo "Go is already installed."
+    
+    # Set PATH for this session and future sessions
+    export PATH=$PATH:/usr/local/go/bin
+    echo 'export PATH=$PATH:/usr/local/go/bin' >> /root/.bashrc
 fi
+
+# Ensure Go is in the PATH for this script
+export PATH=$PATH:/usr/local/go/bin
 
 echo "Go version:" $(go version)
 
