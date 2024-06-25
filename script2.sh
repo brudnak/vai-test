@@ -28,10 +28,6 @@ export PATH=$PATH:/usr/local/go/bin
 echo "Checking Go version:"
 go version
 
-# Install build essentials
-echo "Installing build essentials..."
-apk add --no-cache gcc musl-dev
-
 echo "Removing old vai-query if it exists..."
 rm -f /usr/local/bin/vai-query
 
@@ -52,60 +48,52 @@ import (
     "fmt"
     "log"
     "os"
-    _ "github.com/mattn/go-sqlite3"
+    "strings"
+
+    "github.com/pkg/errors"
+    _ "modernc.org/sqlite"
 )
 
 func main() {
-    db, err := sql.Open("sqlite3", "/var/lib/rancher/informer_object_fields.db")
+    tableName := strings.ReplaceAll(os.Getenv("TABLE_NAME"), "\"", "")
+    resourceName := os.Getenv("RESOURCE_NAME")
+
+    db, err := sql.Open("sqlite", "/var/lib/rancher/informer_object_fields.db")
     if err != nil {
         log.Fatal(err)
     }
     defer db.Close()
 
-    tableName := os.Getenv("TABLE_NAME")
-    resourceName := os.Getenv("RESOURCE_NAME")
-
-    query := fmt.Sprintf("SELECT * FROM %s WHERE name = ?", tableName)
-    rows, err := db.Query(query, resourceName)
+    query := fmt.Sprintf("SELECT \"metadata.name\" FROM \"%s\" WHERE \"metadata.name\" = ?", tableName)
+    stmt, err := db.Prepare(query)
     if err != nil {
         log.Fatal(err)
     }
-    defer rows.Close()
+    defer stmt.Close()
 
-    columns, err := rows.Columns()
+    var result string
+    err = stmt.QueryRow(resourceName).Scan(&result)
     if err != nil {
-        log.Fatal(err)
-    }
-
-    values := make([]interface{}, len(columns))
-    valuePtrs := make([]interface{}, len(columns))
-    for i := range columns {
-        valuePtrs[i] = &values[i]
-    }
-
-    for rows.Next() {
-        err := rows.Scan(valuePtrs...)
-        if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            fmt.Println("Resource not found")
+        } else {
             log.Fatal(err)
         }
-
-        for i, col := range columns {
-            val := values[i]
-            fmt.Printf("%s: %v\n", col, val)
-        }
+    } else {
+        fmt.Println("Found resource:", result)
     }
 }
 EOF
 
-echo "Adding SQLite driver to go.mod..."
-go get github.com/mattn/go-sqlite3
+echo "Adding dependencies..."
+go get github.com/pkg/errors
+go get modernc.org/sqlite
 
-echo "Building the program with CGO enabled..."
-CGO_ENABLED=1 go build -o /usr/local/bin/vai-query main.go
-
-echo "vai-query program built successfully."
+echo "Building pure Go version..."
+go build -o /usr/local/bin/vai-query main.go
+echo "Pure Go vai-query program built successfully."
 
 echo "Executing the query program..."
-CGO_ENABLED=1 TABLE_NAME="${TABLE_NAME}" RESOURCE_NAME="${RESOURCE_NAME}" /usr/local/bin/vai-query
+TABLE_NAME="${TABLE_NAME}" RESOURCE_NAME="${RESOURCE_NAME}" /usr/local/bin/vai-query
 
 echo "Script execution completed."
