@@ -15,7 +15,7 @@ echo "Querying for secret:"
 /tmp/sqlite3 /var/lib/rancher/informer_object_fields.db <<EOF
 .headers on
 .mode column
-SELECT * FROM _v1_Secret_fields WHERE "metadata.name" = '$SECRET_NAME';
+SELECT "metadata.name" FROM _v1_Secret_fields WHERE "metadata.name" = '$SECRET_NAME';
 EOF
 
 # Add any other investigative queries here
