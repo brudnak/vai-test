@@ -18,11 +18,4 @@ echo "Querying for secret:"
 SELECT * FROM _v1_Secret_fields WHERE "metadata.name" = '$SECRET_NAME';
 EOF
 
-echo "Listing sample data from _v1_Secret_fields:"
-/tmp/sqlite3 /var/lib/rancher/informer_object_fields.db <<EOF
-.headers on
-.mode column
-SELECT * FROM _v1_Secret_fields LIMIT 5;
-EOF
-
 # Add any other investigative queries here
