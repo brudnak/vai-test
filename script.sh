@@ -28,5 +28,5 @@ echo "Executing query:"
 /tmp/sqlite3 /var/lib/rancher/informer_object_fields.db <<EOF
 .headers on
 .mode column
-$SQL_QUERY
+SELECT "metadata.name" FROM ${TABLE_NAME} WHERE "metadata.name" = '${RESOURCE_NAME}';
 EOF
