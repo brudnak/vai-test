@@ -28,5 +28,7 @@ echo "Executing query:"
 /tmp/sqlite3 /var/lib/rancher/informer_object_fields.db <<EOF
 .headers on
 .mode column
-$SQL_QUERY
+$(echo "$SQL_QUERY" | sed "s/'/''/g")
 EOF
+
+# Add any other investigative queries here
